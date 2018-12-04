@@ -1,0 +1,14 @@
+
+* [[https://www.dcnr.pa.gov/StateParks/FindAPark/PymatuningStatePark/Pages/default.aspx][Pymatuning]]
+
+
+(Currently) A small module for generating todo lists in plain text
+from a python module.
+
+The motivation is that I want to do a methodical check of certain
+properties for a sizable module with many submodules, classes, and
+methods.
+
+I figured this could be automated.
+
+The name is just the first thing I thought of with 'py' in it.
