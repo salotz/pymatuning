@@ -3,6 +3,11 @@ import sys
 
 import click
 
+@click.command()
+def listing(module):
+    pass
+
+
 @click.group()
 def cli():
     pass
