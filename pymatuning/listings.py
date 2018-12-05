@@ -1,7 +1,10 @@
 from pkgutil import iter_modules, walk_packages
 from importlib import import_module
+import importlib.util as imp
 import ast
 import itertools as it
+import os.path as osp
+import os
 
 
 import networkx as nx
@@ -22,11 +25,45 @@ SPECIAL_METHODS = ('property', 'classmethod', 'staticmethod',)
 def _leaves(graph):
     return [x for x in graph.nodes() if graph.out_degree(x)==0 and graph.in_degree(x)==1]
 
+def _roots(graph):
+    return [x for x in graph.nodes() if graph.out_degree(x)>0 and graph.in_degree(x)==0]
+
 def mod_basename(modpath):
     return modpath.split(MODULE_SEPARATOR)[-1]
 
 def mod_rootname(modpath):
     return MODULE_SEPARATOR.join(modpath.split(MODULE_SEPARATOR)[:-1])
+
+def import_module_from_filepath(mod_filepath):
+
+    modname = osp.splitext(osp.basename(mod_filepath))[0]
+
+    # then use importlib to get a module spec and load it
+    spec = imp.spec_from_file_location(modname, mod_filepath)
+
+    module = imp.module_from_spec(spec)
+
+    spec.loader.exec_module(module)
+
+    # then import all the submodules as well
+
+    return module
+
+def import_package_from_filepath(package_root_filepath):
+
+    # also assume module name is the last thing in the path
+    modname = osp.basename(package_root_filepath)
+
+    import_module_from_filepath(osp.join(package_root_filepath, "__init__.py"))
+
+    for name in os.listdir(package_root_filepath):
+        path = osp.join(package_root_filepath, name)
+        if path.endswith('.py'):
+             import_module_from_filepath(path)
+
+        elif osp.isdir(path):
+            if "__init__.py" in os.listdir(path):
+                import_package_from_filepath(path)
 
 def list_file_submodules(package_filepath):
     """List all the submodule names for the given module file path."""
@@ -402,33 +439,33 @@ def interface_tree(package):
             # attribute
             for attribute in class_defs['attributes']:
                 attribute_node_id = (mod_fqname, classname, attribute)
-                edge = (mod_fqname, attribute_node_id)
+                edge = (class_node_id, attribute_node_id)
                 i_tree.add_edge(*edge)
 
             # methods
             for method in class_defs['methods']:
                 method_node_id = (mod_fqname, classname, method)
-                edge = (mod_fqname, method_node_id)
+                edge = (class_node_id, method_node_id)
                 i_tree.add_edge(*edge)
             for method in class_defs['classmethods']:
                 method_node_id = (mod_fqname, classname, method)
-                edge = (mod_fqname, method_node_id)
+                edge = (class_node_id, method_node_id)
                 i_tree.add_edge(*edge)
             for method in class_defs['staticmethods']:
                 method_node_id = (mod_fqname, classname, method)
-                edge = (mod_fqname, method_node_id)
+                edge = (class_node_id, method_node_id)
                 i_tree.add_edge(*edge)
             for method in class_defs['properties']:
                 method_node_id = (mod_fqname, classname, method)
-                edge = (mod_fqname, method_node_id)
+                edge = (class_node_id, method_node_id)
                 i_tree.add_edge(*edge)
             for method in class_defs['setters']:
                 method_node_id = (mod_fqname, classname, method)
-                edge = (mod_fqname, method_node_id)
+                edge = (class_node_id, method_node_id)
                 i_tree.add_edge(*edge)
             for method in class_defs['getters']:
                 method_node_id = (mod_fqname, classname, method)
-                edge = (mod_fqname, method_node_id)
+                edge = (class_node_id, method_node_id)
                 i_tree.add_edge(*edge)
 
 
